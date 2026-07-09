@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>三分鐘登階心肺耐力指數計算機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F8F7;
+    --surface:#FFFFFF;
+    --ink:#1F2E2B;
+    --muted:#657672;
+    --line:#DCE6E2;
+    --accent:#2F6F62;
+    --accent-dark:#204A41;
+    --g0:#C85C4B; /* 不好 */
+    --g1:#DB9A4E; /* 稍差 */
+    --g2:#D2B944; /* 適當 */
+    --g3:#8FB86A; /* 良好 */
+    --g4:#2F8F72; /* 很好 */
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:480px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.14em;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:'Noto Serif TC', serif;
+    font-size:26px;
+    line-height:1.4;
+    margin:0 0 8px;
+    color:var(--accent-dark);
+  }
+  .subtitle{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.7;
+    margin:0 0 22px;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .field-group{margin-bottom:18px;}
+  .field-group:last-child{margin-bottom:0;}
+  label{
+    display:block;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+    margin-bottom:8px;
+  }
+  .hint{
+    font-size:12px;
+    color:var(--muted);
+    margin-top:6px;
+    line-height:1.6;
+  }
+  .toggle-row{
+    display:flex;
+    gap:10px;
+  }
+  .toggle-btn{
+    flex:1;
+    padding:12px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--bg);
+    color:var(--ink);
+    font-size:15px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+  }
+  .toggle-btn.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#fff;
+  }
+  input[type="number"]{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    font-size:16px;
+    font-family:inherit;
+    color:var(--ink);
+    background:var(--bg);
+  }
+  input[type="number"]:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .pulses-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+  }
+  .pulses-grid label{
+    font-size:11px;
+    font-weight:500;
+    color:var(--muted);
+  }
+  .calc-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:var(--accent-dark);
+    color:#fff;
+    font-size:16px;
+    font-weight:700;
+    font-family:inherit;
+    cursor:pointer;
+    margin-top:6px;
+  }
+  .calc-btn:active{background:var(--accent);}
+
+  .result-card{
+    text-align:center;
+    display:none;
+  }
+  .result-card.show{display:block;}
+  .result-index{
+    font-family:'Noto Serif TC', serif;
+    font-size:52px;
+    font-weight:700;
+    color:var(--accent-dark);
+    line-height:1;
+  }
+  .result-index .unit{
+    display:block;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:13px;
+    font-weight:500;
+    color:var(--muted);
+    margin-top:6px;
+  }
+  .grade-badge{
+    display:inline-block;
+    margin:14px 0 20px;
+    padding:6px 20px;
+    border-radius:999px;
+    font-size:15px;
+    font-weight:700;
+    color:#fff;
+  }
+  .meter{
+    position:relative;
+    height:10px;
+    border-radius:6px;
+    overflow:visible;
+    background:linear-gradient(to right,
+      var(--g0) 0% 20%, var(--g1) 20% 40%, var(--g2) 40% 60%,
+      var(--g3) 60% 80%, var(--g4) 80% 100%);
+    margin:0 4px;
+  }
+  .meter-marker{
+    position:absolute;
+    top:-6px;
+    width:2px;
+    height:22px;
+    background:var(--ink);
+    transform:translateX(-1px);
+  }
+  .meter-marker::after{
+    content:'';
+    position:absolute;
+    top:-7px;
+    left:50%;
+    width:9px;
+    height:9px;
+    border-radius:50%;
+    background:var(--ink);
+    transform:translateX(-50%);
+  }
+  .meter-labels{
+    display:flex;
+    justify-content:space-between;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:10px;
+    padding:0 2px;
+  }
+  .context-note{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.7;
+    margin-top:18px;
+    text-align:left;
+    border-top:1px solid var(--line);
+    padding-top:14px;
+  }
+
+  details.card summary{
+    cursor:pointer;
+    font-weight:700;
+    font-size:14px;
+    list-style:none;
+  }
+  details.card summary::-webkit-details-marker{display:none;}
+  details.card summary::after{
+    content:'▾';
+    float:right;
+    color:var(--accent);
+  }
+  details.card[open] summary::after{content:'▴';}
+  .norm-table{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:14px;
+    font-size:12px;
+  }
+  .norm-table caption{
+    text-align:left;
+    font-weight:700;
+    font-size:13px;
+    margin-bottom:6px;
+    color:var(--accent-dark);
+  }
+  .norm-table th, .norm-table td{
+    border:1px solid var(--line);
+    padding:6px 4px;
+    text-align:center;
+  }
+  .norm-table th{background:var(--bg);}
+  .norm-table + .norm-table{margin-top:22px;}
+
+  footer{
+    font-size:12px;
+    color:var(--muted);
+    line-height:1.8;
+    padding-top:6px;
+  }
+  footer strong{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">心肺耐力自我檢測 · 結果計算</div>
+  <h1>三分鐘登階指數計算機</h1>
+  <p class="subtitle">測驗統一由現場口令與音樂同步進行，恢復期心跳量測後，請在此輸入你的三次脈搏數，計算個人心肺耐力指數與等級。</p>
+
+  <div class="card">
+    <div class="field-group">
+      <label>性別</label>
+      <div class="toggle-row">
+        <button type="button" class="toggle-btn active" data-sex="male">男</button>
+        <button type="button" class="toggle-btn" data-sex="female">女</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label for="age">年齡（歲）</label>
+      <input type="number" id="age" placeholder="例如 35" min="1" max="120" inputmode="numeric">
+    </div>
+
+    <div class="field-group">
+      <label for="duration">登階持續時間（秒）</label>
+      <input type="number" id="duration" value="180" min="1" max="180" inputmode="numeric">
+      <div class="hint">完成完整 3 分鐘請維持 180；若中途體力不支提前停止，請填實際登階秒數。</div>
+    </div>
+
+    <div class="field-group">
+      <label>測量方式</label>
+      <div class="toggle-row">
+        <button type="button" class="toggle-btn active" data-method="pulse30">手動測脈搏（30秒×3次）</button>
+        <button type="button" class="toggle-btn" data-method="ox60">指尖血氧儀（60秒×3次）</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label id="pulseGroupLabel">恢復期三次脈搏數（各測 30 秒）</label>
+      <div class="pulses-grid">
+        <div>
+          <label id="hr1Label" for="hr1">1'00"–1'30"</label>
+          <input type="number" id="hr1" min="0" inputmode="numeric">
+        </div>
+        <div>
+          <label id="hr2Label" for="hr2">2'00"–2'30"</label>
+          <input type="number" id="hr2" min="0" inputmode="numeric">
+        </div>
+        <div>
+          <label id="hr3Label" for="hr3">3'00"–3'30"</label>
+          <input type="number" id="hr3" min="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="hint" id="methodHint">以手指觸診測量，恢復期每次量 30 秒脈搏數。</div>
+    </div>
+
+    <button class="calc-btn" id="calcBtn">計算指數</button>
+  </div>
+
+  <div class="card result-card" id="resultCard">
+    <div class="result-index"><span id="indexValue">--</span><span class="unit">登階心肺耐力指數</span></div>
+    <div class="grade-badge" id="gradeBadge">--</div>
+    <div class="meter">
+      <div class="meter-marker" id="meterMarker" style="left:50%;"></div>
+    </div>
+    <div class="meter-labels">
+      <span>不好</span><span>稍差</span><span>適當</span><span>良好</span><span>很好</span>
+    </div>
+    <p class="context-note" id="contextNote"></p>
+  </div>
+
+  <details class="card">
+    <summary>查看完整常模對照表</summary>
+    <table class="norm-table">
+      <caption>男性「心肺耐力」簡易常模</caption>
+      <thead><tr><th>年齡</th><th>不好</th><th>稍差</th><th>適當</th><th>良好</th><th>很好</th></tr></thead>
+      <tbody>
+        <tr><td>18–24</td><td>~48.1</td><td>48.2–52.9</td><td>53.0–57.0</td><td>57.1–62.9</td><td>63.0~</td></tr>
+        <tr><td>25–34</td><td>~47.1</td><td>47.2–51.4</td><td>51.5–55.6</td><td>55.7–60.8</td><td>60.9~</td></tr>
+        <tr><td>35–44</td><td>~47.6</td><td>47.7–52.0</td><td>52.1–56.3</td><td>56.4–61.6</td><td>61.7~</td></tr>
+        <tr><td>45–54</td><td>~48.6</td><td>48.7–53.3</td><td>53.4–57.3</td><td>57.4–62.9</td><td>63.0~</td></tr>
+        <tr><td>55–64</td><td>~48.6</td><td>48.7–54.0</td><td>54.1–58.8</td><td>58.9–64.3</td><td>64.4~</td></tr>
+      </tbody>
+    </table>
+    <table class="norm-table">
+      <caption>女性「心肺耐力」簡易常模</caption>
+      <thead><tr><th>年齡</th><th>不好</th><th>稍差</th><th>適當</th><th>良好</th><th>很好</th></tr></thead>
+      <tbody>
+        <tr><td>18–24</td><td>~46.9</td><td>47.0–50.6</td><td>50.7–54.5</td><td>54.6–59.6</td><td>59.7~</td></tr>
+        <tr><td>25–34</td><td>~46.6</td><td>46.7–50.8</td><td>50.9–54.5</td><td>54.6–59.6</td><td>59.7~</td></tr>
+        <tr><td>35–44</td><td>~47.3</td><td>47.4–51.7</td><td>51.8–55.6</td><td>55.7–60.4</td><td>60.5~</td></tr>
+        <tr><td>45–54</td><td>~47.4</td><td>47.2–52.9</td><td>53.0–57.3</td><td>57.4–62.9</td><td>63.0~</td></tr>
+        <tr><td>55–64</td><td>~44.0</td><td>44.1–52.3</td><td>52.4–57.7</td><td>57.8–63.8</td><td>63.9~</td></tr>
+      </tbody>
+    </table>
+  </details>
+
+  <footer>
+    <strong>計算公式：</strong><br>
+    手動測脈搏（30秒×3次）：登階指數 ＝ 登階持續時間（秒）× 100 ／〔2 ×（三次恢復脈搏數總和）〕。<br>
+    指尖血氧儀（60秒×3次）：登階指數 ＝ 登階持續時間（秒）× 100 ／（三次每分鐘心跳數總和）。<br>
+    常模年齡涵蓋 18–64 歲；未滿 18 歲以 18–24 組對照，超過 64 歲以 55–64 組對照，僅供參考。
+  </footer>
+
+</div>
+
+<script>
+const norms = {
+  male: {
+    "18-24":[48.1,52.9,57.0,62.9],
+    "25-34":[47.1,51.4,55.6,60.8],
+    "35-44":[47.6,52.0,56.3,61.6],
+    "45-54":[48.6,53.3,57.3,62.9],
+    "55-64":[48.6,54.0,58.8,64.3]
+  },
+  female: {
+    "18-24":[46.9,50.6,54.5,59.6],
+    "25-34":[46.6,50.8,54.5,59.6],
+    "35-44":[47.3,51.7,55.6,60.4],
+    "45-54":[47.4,52.9,57.3,62.9],
+    "55-64":[44.0,52.3,57.7,63.8]
+  }
+};
+const gradeNames = ["不好","稍差","適當","良好","很好"];
+const gradeColors = ["var(--g0)","var(--g1)","var(--g2)","var(--g3)","var(--g4)"];
+
+let sex = "male";
+let method = "pulse30";
+
+const methodConfig = {
+  pulse30: {
+    groupLabel: "恢復期三次脈搏數（各測 30 秒）",
+    hint: "以手指觸診測量，恢復期每次量 30 秒脈搏數。",
+    labels: ["1'00\"–1'30\"", "2'00\"–2'30\"", "3'00\"–3'30\""]
+  },
+  ox60: {
+    groupLabel: "恢復期三次每分鐘心跳數（各測 60 秒）",
+    hint: "以指尖血氧儀讀取，恢復期每次記錄 60 秒（每分鐘）心跳數。",
+    labels: ["1'00\"–2'00\"", "2'00\"–3'00\"", "3'00\"–4'00\""]
+  }
+};
+
+function applyMethodUI(){
+  const cfg = methodConfig[method];
+  document.getElementById("pulseGroupLabel").textContent = cfg.groupLabel;
+  document.getElementById("methodHint").textContent = cfg.hint;
+  document.getElementById("hr1Label").textContent = cfg.labels[0];
+  document.getElementById("hr2Label").textContent = cfg.labels[1];
+  document.getElementById("hr3Label").textContent = cfg.labels[2];
+}
+
+document.querySelectorAll("[data-sex]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("[data-sex]").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    sex = btn.dataset.sex;
+  });
+});
+
+document.querySelectorAll("[data-method]").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("[data-method]").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    method = btn.dataset.method;
+    applyMethodUI();
+  });
+});
+
+function ageGroup(age){
+  let note = "";
+  if(age < 18){ note = "（未滿 18 歲，以 18–24 組對照，僅供參考）"; age = 20; }
+  else if(age > 64){ note = "（超過 64 歲，以 55–64 組對照，僅供參考）"; age = 60; }
+  let group;
+  if(age < 25) group = "18-24";
+  else if(age < 35) group = "25-34";
+  else if(age < 45) group = "35-44";
+  else if(age < 55) group = "45-54";
+  else group = "55-64";
+  return {group, note};
+}
+
+function getGradeIndex(value, bounds){
+  if(value <= bounds[0]) return 0;
+  if(value <= bounds[1]) return 1;
+  if(value <= bounds[2]) return 2;
+  if(value <= bounds[3]) return 3;
+  return 4;
+}
+
+document.getElementById("calcBtn").addEventListener("click", ()=>{
+  const age = parseFloat(document.getElementById("age").value);
+  const duration = parseFloat(document.getElementById("duration").value);
+  const hr1 = parseFloat(document.getElementById("hr1").value);
+  const hr2 = parseFloat(document.getElementById("hr2").value);
+  const hr3 = parseFloat(document.getElementById("hr3").value);
+
+  if(!age || !duration || isNaN(hr1) || isNaN(hr2) || isNaN(hr3)){
+    alert("請完整填寫年齡、登階時間與三次脈搏數。");
+    return;
+  }
+
+  const sum = hr1 + hr2 + hr3;
+  if(sum <= 0){
+    alert("心跳/脈搏數總和需大於 0，請確認輸入。");
+    return;
+  }
+
+  const index = method === "pulse30"
+    ? (duration * 100) / (2 * sum)
+    : (duration * 100) / sum;
+  const {group, note} = ageGroup(age);
+  const bounds = norms[sex][group];
+  const gIdx = getGradeIndex(index, bounds);
+
+  document.getElementById("indexValue").textContent = index.toFixed(1);
+  const badge = document.getElementById("gradeBadge");
+  badge.textContent = gradeNames[gIdx];
+  badge.style.background = gradeColors[gIdx];
+
+  // marker position within the 5-segment (0-100%) meter
+  const segMin = gIdx === 0 ? bounds[0] - 15 : bounds[gIdx - 1];
+  const segMax = gIdx === 4 ? bounds[3] + 15 : bounds[gIdx];
+  let frac = (index - segMin) / (segMax - segMin);
+  frac = Math.max(0, Math.min(1, frac));
+  const leftPct = gIdx * 20 + frac * 20;
+  document.getElementById("meterMarker").style.left = leftPct + "%";
+
+  document.getElementById("contextNote").textContent =
+    `對照組別：${sex === "male" ? "男性" : "女性"} ${group} 歲${note}`;
+
+  document.getElementById("resultCard").classList.add("show");
+  document.getElementById("resultCard").scrollIntoView({behavior:"smooth", block:"center"});
+});
+</script>
+</body>
+</html>
